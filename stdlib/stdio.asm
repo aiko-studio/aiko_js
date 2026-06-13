@@ -580,6 +580,79 @@ check_bound:
 
 
 
+
+; -----------------------------------------------------------
+; Fungsi: get_element
+; Argumen: 
+;   EAX = Alamat Box (Array Base atau String Base)
+;   ECX = Index yang mau diakses
+; Output:
+;   EAX = Alamat Box baru (berisi karakter) ATAU elemen array
+; -----------------------------------------------------------
+get_element:
+    push ebp
+    mov ebp, esp
+    
+    push ebx        ; Simpan EBX karena kita mau pakai untuk menampung ASCII
+    push edx        ; Simpan EDX untuk pointer data
+
+    ; Cek tipe data dari Box Base (offset 4)
+    cmp dword [eax + 4], 1
+    je .is_string   ; Jika tipe = 1 (String), lompat ke logika string
+
+.is_array:
+    ; Logika jika tipe adalah Array
+    call check_bound    ; Pengecekan batas array (akan panic jika out-of-bounds)
+    
+    imul ecx, 8         ; Hitung offset (Index * 8 byte per elemen)
+    add eax, ecx        ; EAX = Base Array + Offset
+    add eax, 8          ; Lewati Header Size Array (8 byte pertama)
+    jmp .done           ; Selesai, langsung lompat ke akhir
+
+.is_string:
+    ; Logika jika tipe adalah String
+    mov edx, [eax]          ; Ambil pointer ke awal literal string ("tes12")
+    add edx, ecx            ; Tambahkan index ke pointer string (Base + Index)
+    movzx ebx, byte [edx]   ; Ambil 1 byte karakter (ASCII) dan masukkan ke EBX
+    
+    ; Persiapan alokasi memori untuk karakter yang diambil
+    push ebx                ; Amankan nilai ASCII di stack
+    push ecx                ; Amankan index di stack
+
+    ; Alokasi 8 byte untuk Box baru menggunakan Arena
+    push 8           
+    call arena_alloc
+    add esp, 4              ; Bersihkan argumen arena_alloc dari stack
+
+pop ecx                 ; Kembalikan index
+    pop ebx                 ; Kembalikan nilai ASCII
+
+    mov byte [eax], bl      ; Byte ke-0: karakter ASCII
+    mov byte [eax + 1], 0   ; Byte ke-1: null-terminator (0)
+
+    push eax                ; Amankan pointer string baru yang ada di EAX ke stack
+    
+    push 8                  ; Alokasi 8 byte untuk Box
+    call arena_alloc
+    add esp, 4              ; Stack cleanup
+
+    pop edx                 ; Ambil kembali pointer string baru dari stack ke EDX
+
+    ; Isi Box baru dengan data karakter
+    mov dword [eax], edx    ; Masukkan nilai ASCII ke dalam nilai Box
+    mov dword [eax + 4], 1  ;
+
+.done:
+    ; Kembalikan register awal dan return
+    pop edx
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
+
+
+
+
 arena_init:
     push ebp
     mov ebp, esp
@@ -639,4 +712,90 @@ arena_rewind:
 
 arena_mark:
     mov eax, [ARENA_OFFSET]
+    ret
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+; ============================================
+; return_copy_value (Versi Flat Memory Box)
+; In : ESI = pointer Box lama (sumber)
+;      EDI = pointer Box baru (tujuan, sudah dialokasikan)
+; Out : Box baru terisi penuh (termasuk seluruh elemen jika array)
+; Clobbers: EAX, EBX, ECX, EDX
+; Preserved: ESI, EDI
+; ============================================
+return_copy_value:
+    push ebx
+    push ecx
+    push edx
+    push esi                ; Amankan ESI original
+    push edi                ; Amankan EDI original
+
+    mov ecx, [esi+4]        ; Ambil len_type / type dari box lama
+    cmp ecx, 3              ; Apakah tipe data = 3 (Array)?
+    je .is_array
+
+    ; --- NON-ARRAY (Primitive standard 8 byte: val + type) ---
+    mov ecx, [esi]          ; Salin value
+    mov [edi], ecx
+    mov ecx, [esi+4]        ; Salin type
+    mov [edi+4], ecx
+    jmp .done
+
+.is_array:
+    ; --- FLAT ARRAY DEEP COPY ---
+    ; Karena Box Baru (EDI) saat di handleReturn cuma dialokasikan 8 byte,
+    ; padahal kita butuh space sebesar TOTAL UKURAN ARRAY LAMA,
+    ; maka kita harus mengalokasikan ulang memori yang pas untuk EDI!
+
+    mov ebx, [esi]          ; ebx = jumlah elemen (len)
+    imul ebx, 8             ; ebx = len * 8 (ukuran seluruh elemen)
+    add ebx, 8              ; ebx = (len * 8) + 8 (ditambah header len & len_type)
+    ; Sekarang EBX berisi total bytes dari seluruh struktur array lama
+
+    push ebx                ; Push ukuran total sebagai argumen arena_alloc
+    call arena_alloc
+    add esp, 4
+    ; EAX sekarang berisi alamat memori BARU yang ukurannya muat untuk array ini
+
+    ; Salin alamat memori baru ini ke tempat EDI yang asli
+    ; Agar fungsi pemanggil (handleReturn) mendapatkan pointer yang benar di EAX
+    mov edx, [esp]          ; Mengambil nilai EDI original dari stack tanpa pop (esp menunjuk ke EDI)
+    ; Catatan: Karena kita ingin mengembalikan EAX sebagai alamat array baru, 
+    ; kita simpan dulu EAX ke slot EDI di stack agar saat 'pop edi' nanti, EDI/EAX sinkron.
+    mov [esp], eax          
+
+    mov edi, eax            ; EDI sekarang menunjuk ke block baru hasil alloc
+    mov ecx, ebx            ; ECX = total bytes yang akan di-copy
+    cld
+    rep movsb               ; Salin total bytes dari ESI ke EDI secara linear
+    
+.done:
+    pop edi                 ; Mengembalikan EDI (sekarang berisi alamat array baru jika array)
+    pop esi
+    pop edx
+    pop ecx
+    pop ebx
+    
+    ; Pastikan EAX selalu berisi alamat Box Baru agar bersahabat dengan handleReturn
+    mov eax, edi            
     ret

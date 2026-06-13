@@ -152,11 +152,12 @@ class LiteralStmt {
 };
 
 class IdentifierStmt {
-    constructor(name, lineStart, lineEnd){
+    constructor(name, lineStart, lineEnd, modulePrefix = null){
         this.type = 'Identifier';
         this.name = name;
         this.lineStart = lineStart;
         this.lineEnd = lineEnd;
+        this.modulePrefix = modulePrefix;
     } 
 };
 
@@ -199,6 +200,15 @@ class UseStmt {
     }
 }
 
+class LenStmt {
+    constructor(expression, lineStart, lineEnd){
+        this.type = 'Len';
+        this.expression = expression;
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+    }
+}
+
 class BreakStmt {
     constructor(line){
         this.type = 'Break';
@@ -233,6 +243,7 @@ module.exports = {
     TypeofStmt,
     InputStmt,
     UseStmt,
+    LenStmt,
     BreakStmt,
     ContinueStmt
 };

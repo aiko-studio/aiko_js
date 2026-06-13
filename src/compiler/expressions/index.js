@@ -7,7 +7,7 @@ const generateInput = require('./generateInput');
 const generateTypeof = require('./generateTypeof');
 const generateUnaryOp = require('./generateUnaryOp');
 const handleFunCall = require('../statements/handleFunCall');
-
+const handleLen = require('./generateLen');
 
 const expressionHandler = {
   	'Literal':      (self, expr, mode) => generateLiteral(self, expr, mode),
@@ -19,6 +19,7 @@ const expressionHandler = {
   	'ArrayAccess':  (self, expr)       => generateArrayAccess(self, expr),
   	'Input':        (self, expr)       => generateInput(self, expr),
   	'Typeof':       (self, expr)       => generateTypeof(self, expr),
+	'Len':			(self, expr) => handleLen(self, expr),
 };
 
 module.exports = expressionHandler;

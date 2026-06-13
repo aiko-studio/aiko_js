@@ -18,6 +18,8 @@ function handleForEach({
     // ✅ FIX: Setelah generateStatement(iterator), eax sudah tertimpa oleh item box.
     // Kita perlu reload pointer array dari variabelnya langsung.
     const varName = iterator.value || iterator.name;
+    const varEntry = self.variables.find(obj => obj && obj[varName]);
+    if (varEntry) varEntry[varName].isArray = false;
     const varOffset = self.resolveVar(varName).offset;
 
     // Tapi varName di sini adalah "item" (loop var), bukan array.

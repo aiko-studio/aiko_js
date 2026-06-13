@@ -1,16 +1,23 @@
 function handleFunDecl(self, stmt){
     const { name, params, body } = stmt;
     
+    let finalFuncName = name;
+
+    // jika sedang didalam module tambahkan nama module ke nama fungsi
+    if (self.module && self.module.length > 0) {
+        let modStr = Array.isArray(self.module) ? self.module.join('_') : self.module;
+        finalFuncName = `${modStr}_${name}`;
+    }
+    
     // daftarkan fungsi
     self.registerFunction({
-        name,
+        name: finalFuncName,
         paramCount: params.length,
         paramNames: params
     }, stmt);
-
-
-    self.currentFunction = name;
-
+    
+    self.currentFunction = finalFuncName;
+    
     const oldSection = self.textSection; // current section sekarang adalah function body
     const oldSourceMap = self.sourceMap;       // <--- Simpan map utama
     const oldIndent = self.indentLevel;        // <--- Simpan indentasi
@@ -25,6 +32,11 @@ function handleFunDecl(self, stmt){
     self.enterScope();
     self.emit(`push ebp    ; buat stack frame baru`);
     self.emit(`mov ebp, esp`);
+
+    self.emit(`call arena_mark    ; Ambil posisi arena saat ini ke eax`);
+    self.emit(`push eax           ; Simpan mark ke stack di [ebp - 4]`);
+    self.currentOffset += 4;      // Update offset karena [ebp - 4] dipakai mark
+
     self.blank(1);
     
     // console.log(params);
@@ -58,7 +70,13 @@ function handleFunDecl(self, stmt){
     
     self.blank(1);
     
-    self.textSection.push(`${name}_exit:`);
+    self.textSection.push(`fun_${finalFuncName}_exit:`);
+
+    self.emit(`push eax           ; amankan return value fungsi (di eax)`);
+    self.emit(`mov eax, [ebp - 4] ; ambil kembali arena mark khusus fungsi ini`);
+    self.emit(`call arena_rewind  ; bersihkan memori arena fungsi ini`);
+    self.emit(`pop eax            ; kembalikan return value fungsi`);
+
     self.exitScope();
     self.blank(2);
     self.sourceMap.push(self.currentSourceLocation);
@@ -72,7 +90,7 @@ function handleFunDecl(self, stmt){
 
     // baru tulis definisi fungsi
     self.functiontSection.push(`; ------------------------------ Start Deklarasi fungsi ${name} ------------------------------`);
-    self.functiontSection.push(`fun_${name}:`);
+    self.functiontSection.push(`fun_${finalFuncName}:`);
     self.functionSourceMap.push(self.currentSourceLocation);
     
     // Push Code & Map
@@ -87,6 +105,9 @@ function handleFunDecl(self, stmt){
 
     // agar bisa mendeteksi return diluar fungsi dengan cara membuat current func na null
     self.currentFunction = null;
+
+    console.log(self.functionNames);
+    
 }
 
 module.exports = handleFunDecl;

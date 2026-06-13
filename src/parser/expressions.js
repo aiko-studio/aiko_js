@@ -1,7 +1,7 @@
 const {
     BinaryOpStmt, LiteralStmt, IdentifierStmt, 
     ArrayAccessStmt, ArrayLiteralStmt, FunctionCallStmt,
-    InputStmt, TypeofStmt, UnaryOpStmt, PrintStmt
+    InputStmt, LenStmt, TypeofStmt, UnaryOpStmt, PrintStmt
 } = require('../../helper/ast_tree');
 
 module.exports = {
@@ -68,6 +68,21 @@ module.exports = {
             return new LiteralStmt(value, this.getLine(), this.getLine());
         }
 
+        // cek len
+        if (this.current.type === 'LEN') {
+            const lenToken = this.expect('LEN'); // Konsumsi token 'LEN' dan catat infonya
+            const lineStart = lenToken.line;
+
+            this.expect('LPAREN'); // Pastikan ada '(' setelah len
+            const argument = this.parseExpression(); // Ambil identifier/ekspresi di dalam kurung (misal: arr)
+            this.expect('RPAREN'); // Pastikan ditutup dengan ')'
+
+            const lineEnd = this.tokens[this.position - 1].line;
+
+            // Kembalikan objek LenStmt agar konsisten dengan InputStmt
+            return new LenStmt(argument, lineStart, lineEnd);
+        }
+
         // cek input
         if(this.match('INPUT')){
             const lineStart = this.tokens[this.position - 1].line;
@@ -105,8 +120,17 @@ module.exports = {
         // cek variabel dan array
         if(this.current.type === 'IDENTIFIER'){
             const lineStart = this.current.line;
-            const ID = new IdentifierStmt(this.current.value, lineStart, lineStart);
+            let name = this.current.value;
             this.next_token();
+
+            let modulePrefix = null;
+
+            if (this.match('DOT')) {
+                modulePrefix = name; // Identifier pertama menjadi nama modul
+                name = this.expect('IDENTIFIER').value; // Identifier kedua menjadi nama asli
+            }
+
+            const ID = new IdentifierStmt(name, lineStart, lineStart, modulePrefix);
 
             // cek kalau pemanggilan fungsi
             if(this.match('LPAREN')){

@@ -150,6 +150,7 @@ class Lexer {
             'as': 'AS',
             'in': 'IN',
             'when': 'WHEN',
+            'len': 'LEN',
             'break': "BREAK",
             'continue': 'CONTINUE'
             // 'while': 'WHILE',

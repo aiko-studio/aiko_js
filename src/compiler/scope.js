@@ -13,7 +13,7 @@ module.exports = {
 
 		const scope = this.variables.pop();
 
-  	  	this.emit(`push eax    ; simpan return value`);
+  	  	// this.emit(`push eax    ; simpan return value`);
   	  	let localStackSize = 0; // hanya ebp - x
 	  
   	  	// free heap
@@ -31,17 +31,18 @@ module.exports = {
 				localStackSize += 4;
   	  	  	}
   	  	}
-		this.emit(`mov eax, [esp + 4]    ; ambil arena mark`);
-		this.emit(`call arena_rewind`);
-  	  	this.emit(`pop eax    ; kembalikan return value`);
-
-  	  	this.indentLevel--;
-
+		// this.emit(`mov eax, [esp + 4]    ; ambil arena mark`);
+		// this.emit(`call arena_rewind`);
+  	  	// this.emit(`pop eax    ; kembalikan return value`);
+	
 		// free stack
   	  	if (localStackSize > 0) {
-  	  		this.emit(`add esp, ${localStackSize}`);
+			console.log({localStackSize});
+				
+  	  		this.emit(`add esp, ${localStackSize}    ; bersihkan dari stack (scope.js)`);
   	  		this.currentOffset -= localStackSize;
-  	  	}
+		}
+		this.indentLevel--;
   	},
 
       	// mencari variabel dari scope terdalam hingga ke global

@@ -1,10 +1,26 @@
 yg diubah:
+1. handle print, dideteksi array, jika array maka menampilkan element pertama, sebelumnya menampilkan panjang
+2. menambah keyword len di lexer, pembacaan di parser, struktur di ast, dan parse len di parser expr, lalu menambah handle Len di expression pada codegen
+3. menambahkan konsep passing by ref khusus array
+4. menambahkan di generate array literal support ke variabel untuk disalin datanya secara by value
+5. menambah fungsi di asm return copy value dan memanggilnya di handle return, untuk membuat return bisa di array
+6. memperbaiki handle foreach dengan menambah variabel var array dan mengubah isarray jadi false
+7. menambah fitur alias pada codegen handleuse tapi blm pada calling
+8. menambah prefix di ast identifier serta parser identifier statement serta identifier expression. nah juga menambahkan di handle fun decl menambahkan nama modul dinama fungsi dan di pemanggilan fungsi
+9. menambah subroutine di stdio untuk pengambilan element itu angka atau string
+10. memperbaiki arena rewind di exit scope, skrg hanya di function
+11. menambahkan support ke array acces string
+
+
 
 yg belum:
 0. menambahkan line di break, continue
+2. ptr
 1. ubah jdi subroutine pengecekan for agar ga panjang
 2. fitur cek akses angka atau stirng di generate array access pisah jdi macro bisa ndk si
-3. passing array blm bisa loop
+3. hasil return array kalau di print tanpa index tidak menampilkan apa apa (aslinya harusnya elemen 1)
+4. kalau mau tambahin push pop dann capacity di array jd ga cuma length
+4. print di luar function menampilkan elemen pertama sudah benar tapi di dalam function dia len
 4. block for dan if tidak bisa mengubah nilai luar, jadi dicopy variabelnya, kayak argument jadinya, aneh
 4. menambahkan pembuatan deep copy di parameter fungsi untuk referensi
 41. untuk array offset bisa dibuat dalam section data untuk label, misal daripada [x + 88] lebih baik buat dlu .data + 88 itu misal INDEX_5 gitu

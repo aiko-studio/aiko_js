@@ -31,8 +31,21 @@ module.exports = {
         if(this.match('CONTINUE')) return this.parseContinueStmt();
         if(this.current.type === 'IDENTIFIER'){
             const lineStart = this.current.line;
-            const id = new IdentifierStmt(this.current.value, lineStart, lineStart);
+            let name = this.current.value;
             this.next_token();
+            
+            let modulePrefix = null;
+
+            if (this.match('DOT')) {
+                modulePrefix = name; // Identifier pertama menjadi nama modul
+                name = this.expect('IDENTIFIER').value; // Kata setelah titik menjadi nama aslinya
+            }
+
+            const id = new IdentifierStmt(name, lineStart, lineStart, modulePrefix);
+
+            // informasi modul ke dalam node Identifier
+            // null jika pemanggilan lokal biasa
+            id.modulePrefix = modulePrefix;
 
             let target = id;
 
@@ -293,8 +306,8 @@ module.exports = {
     },
 
     parseUse(){
-        const lineStart = this.tokens[this.position - 1].line;
         this.expect('USE');
+        const lineStart = this.tokens[this.position - 1].line;
         const module = [];
 
         module.push(this.expect('IDENTIFIER').value);

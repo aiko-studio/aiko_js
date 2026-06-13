@@ -50,6 +50,10 @@ class Compiler {
   	  	this.sourceMap = [];
   	  	this.functionSourceMap = []; // Penampung map khusus fungsi
   	  	this.currentSourceLocation = null;
+
+		// modul use library
+		this.importedModules = new Set();     // Mencatat file yang sudah di-import
+        this.moduleAliases = {};              // Menyimpan mapping nama alias modul
   	}
 
   	updateLocation(node) {

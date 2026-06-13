@@ -1,3 +1,4 @@
 out
 src/compiler/compiler copy.js
 src/compiler/statements/handleForLama.js
+src/compiler/expressions/generateArrayLiteralLama.js

@@ -60,7 +60,7 @@ try {
 } catch (error) {
     // console.error("Compilation failed:");
     // if (error.message) console.error(error.message);
-    // if (error.stack) console.error(error.stack.split('\n')[1]); // stack singkat
+    if (error.stack) console.error(error.stack.split('\n')[1]); // stack singkat
     // Ini untuk menangkap "Crash" yang tidak terduga (Bug di compiler)
     console.error("Critical Compiler Bug:", error.message);
     process.exit(1);

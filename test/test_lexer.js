@@ -1,4 +1,4 @@
-const Lexer = require('../src/lexer.js')
+const Lexer = require('../src/lexer/lexer.js')
 const fs = require('fs');
 const path = require('path');
 

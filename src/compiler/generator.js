@@ -16,7 +16,7 @@ module.exports = {
 
 		// 1. Susun Header
     	const headerParts = [
-    	  	`%include "${path.join(__dirname, '..', '..', '/helper/stdio.asm')}"`,
+    	  	`%include "${path.join(__dirname, '..', '..', '/stdlib/stdio.asm')}"`,
     	  	'section .data',
     	  	...this.dataSection, 
     	  	'', // spacer
