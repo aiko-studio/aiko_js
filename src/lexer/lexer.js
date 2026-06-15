@@ -152,7 +152,13 @@ class Lexer {
             'when': 'WHEN',
             'len': 'LEN',
             'break': "BREAK",
-            'continue': 'CONTINUE'
+            'continue': 'CONTINUE',
+            'val': 'VAL',
+            'array': 'ARRAY',
+            'push': 'PUSH',
+            'pop': 'POP',
+            'null': 'NULL',
+            'view': 'VIEW',
             // 'while': 'WHILE',
         };
 

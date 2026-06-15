@@ -1,10 +1,5 @@
-%include "/home/hamm/Documents/aiko_js_fullstack/aiko_js/stdlib/stdio.asm"
+%include "/home/hamm/Documents/aiko_js_fullstack/aiko_js/runtime/runtime.inc"
 section .data
-	str_0 db "t", 0    ; buat variabel string global bernama str_0 dengan tipe byte
-	str_1 db "e", 0    ; buat variabel string global bernama str_1 dengan tipe byte
-	str_2 db "s", 0    ; buat variabel string global bernama str_2 dengan tipe byte
-	str_3 db "1", 0    ; buat variabel string global bernama str_3 dengan tipe byte
-	str_4 db "2", 0    ; buat variabel string global bernama str_4 dengan tipe byte
 
 section .bss
 
@@ -16,135 +11,145 @@ _start:
     mov ebp, esp
     call arena_init
 
-    push 48    ; ------------------------------ alokasi untuk 6 element ------------------------------
+    ; ------------------------------ Start Literal ------------------------------
+    push 8    ; ------------------------------ alokasi untuk 1 element ------------------------------
     call arena_alloc
     add esp, 4
-    mov dword [eax], 5
-    mov dword [eax + 4], 3    ; masukkan tipe data dari value, yaitu array sebagai 3
-    mov dword [eax + 8], str_0
-    mov dword [eax + 12], 1    ; masukkan tipe data dari value, yaitu string
-    mov dword [eax + 16], str_1
-    mov dword [eax + 20], 1    ; masukkan tipe data dari value, yaitu string
-    mov dword [eax + 24], str_2
-    mov dword [eax + 28], 1    ; masukkan tipe data dari value, yaitu string
-    mov dword [eax + 32], str_3
-    mov dword [eax + 36], 1    ; masukkan tipe data dari value, yaitu string
-    mov dword [eax + 40], str_4
-    mov dword [eax + 44], 1    ; masukkan tipe data dari value, yaitu string
-    ; ------------------------------ Start Deklarasi variabel kata ------------------------------
+    mov dword [eax], 19    ; alamat dalam register eax = 19
+    mov dword [eax + 4], 0    ; tipe data = angka sebagai 0
+    ; ------------------------------ End Literal ------------------------------
+
+
+    ; ------------------------------ Start Deklarasi variabel x ------------------------------
     sub esp, 4
     mov dword [ebp - 4], eax    ; pindahkan alamat Box* ke dalam offset 4
-    ; ------------------------------ End Deklarasi variabel kata ------------------------------
+    ; ------------------------------ End Deklarasi variabel x ------------------------------
 
 
-    ; ------------------------------ Start Ambil offset variabel kata ------------------------------
+    ; ------------------------------ Start Ambil offset variabel x ------------------------------
     mov eax, [ebp - 4]    ; eax = Box*
-    ; ------------------------------ End Ambil offset variabel kata ------------------------------
+    ; ------------------------------ End Ambil offset variabel x ------------------------------
+
+
+    ; --- Pass-by-Value: Copying argument 0 ---
+    push eax            ; Simpan alamat Box asli sementara
+    push 8    ; ------------------------------ alokasi untuk 1 element ------------------------------
+    call arena_alloc
+    add esp, 4
+    pop ebx             ; EBX = Alamat Box asli
+    mov ecx, [ebx]      ; Ambil value
+    mov [eax], ecx      ; Masukkan ke Box baru
+    mov ecx, [ebx + 4]  ; Ambil type
+    mov [eax + 4], ecx  ; Masukkan ke Box baru
+    push eax    ; push arg 0
+    call fun_checkAddr
+    add esp, 4    ; bersihkan dari stack
+    ; ------------------------------ Start View (Address Of) ------------------------------
+    ; ------------------------------ Start Ambil offset variabel x ------------------------------
+    mov eax, [ebp - 4]    ; eax = Box*
+    ; ------------------------------ End Ambil offset variabel x ------------------------------
+
+
+    push eax    ; Simpan alamat target yang mau di-view
+    ; Alokasikan 8 byte untuk Box baru hasil view
+    push 8    ; ------------------------------ alokasi untuk 1 element ------------------------------
+    call arena_alloc
+    add esp, 4
+    pop ebx     ; EBX = Alamat asli yang di-view
+    mov [eax], ebx ; Simpan alamat ke dalam value Box hasil
+    mov dword [eax + 4], 4 ; Set tipe Box hasil menjadi INT
+    ; ------------------------------ End View ------------------------------
 
 
     ; ------------------------------ Start Print ------------------------------
-    push dword [eax + 12]    ; push tipe data variabel: kata
-    push dword [eax + 8]    ; push nilai variabel: kata
+    push dword [eax + 4]    ; push tipe data 
+    cmp dword [eax + 4], 3  ; Cek apakah tipe datanya = 3 (Array)?
+    je .is_array_print_11922          ; Jika Ya, lompat ke penanganan Array
+
+
+    push dword [eax]        ; push nilai primitif (literal)
+    jmp .do_print_11922         ; lewati blok array, langsung print
+
+
+    .is_array_print_11922:
+    push eax                ; push POINTER referensi (literal)
+
+
+    .do_print_11922:
     call print_generic    ; panggil fungsi untuk menampilkan nilai
     add esp, 8    ; pop argument dari stack
     call newline    ; untuk memanggil enter
     ; ------------------------------ End Print ------------------------------
 
 
-        ; ------------------------------ Start Literal ------------------------------
-        push 8    ; ------------------------------ alokasi untuk 1 element ------------------------------
-        call arena_alloc
-        add esp, 4
-        mov dword [eax], 0    ; alamat dalam register eax = 0
-        mov dword [eax + 4], 0    ; tipe data = angka sebagai 0
-        ; ------------------------------ End Literal ------------------------------
-
-
-        ; ------------------------------ Start Deklarasi variabel i ------------------------------
-        sub esp, 4
-        mov dword [ebp - 8], eax    ; pindahkan alamat Box* ke dalam offset 8
-        ; ------------------------------ End Deklarasi variabel i ------------------------------
-
-
-        push esi    ; preserve ESI (end_value for_0)
-        push edi    ; preserve EDI (step_value for_0)
-        ; --- Evaluasi End Expression ---
-        mov esi, 5    ; esi = end
-        ; --- Evaluasi Step Expression ---
-        mov edi, 1    ; default step = 1
-        ; --- Auto-Flip Step Direction ---
-        ; ------------------------------ Start Ambil offset variabel i ------------------------------
-        mov eax, [ebp - 8]    ; eax = Box*
-        ; ------------------------------ End Ambil offset variabel i ------------------------------
-
-
-        mov eax, [eax]    ; eax = nilai start
-        cmp eax, esi
-        je for_0_end    ; start == end, skip
-        jl for_0_no_flip ; start < end, step harus positif
-        cmp edi, 0
-        jl for_0_no_flip ; step sudah negatif, ok
-        neg edi           ; flip step ke negatif
-        for_0_no_flip:
-        ; ----- Start Loop For 0 -----
-        for_0_check:
-        ; ------------------------------ Start Ambil offset variabel i ------------------------------
-        mov eax, [ebp - 8]    ; eax = Box*
-        ; ------------------------------ End Ambil offset variabel i ------------------------------
-
-
-        mov eax, [eax]
-        sub eax, esi    ; counter - end
-        imul eax, edi   ; * step (negatif = belum selesai)
-        jge for_0_end
-        for_0_body:
-            ; ------------------------------ Start GenerateArrayAccess ------------------------------
-            ; ------------------------------ Start Ambil offset variabel i ------------------------------
-            mov eax, [ebp - 8]    ; eax = Box*
-            ; ------------------------------ End Ambil offset variabel i ------------------------------
-
-
-            mov ecx, [eax]    ; pindahkan nilai index ke ecx
-            push ecx
-            ; ------------------------------ Start Ambil offset variabel kata ------------------------------
-            mov eax, [ebp - 4]    ; eax = Box*
-            ; ------------------------------ End Ambil offset variabel kata ------------------------------
-
-
-            pop ecx
-            call get_element
-            ; ------------------------------ End GenerateArrayAccess ------------------------------
-
-
-
-            ; ------------------------------ Start Print ------------------------------
-            push dword [eax + 4]    ; push tipe data 
-            push dword [eax]    ; push nilai 
-            call print_generic    ; panggil fungsi untuk menampilkan nilai
-            add esp, 8    ; pop argument dari stack
-            call newline    ; untuk memanggil enter
-            ; ------------------------------ End Print ------------------------------
-
-
-        for_0_update:
-        ; ------------------------------ Start Ambil offset variabel i ------------------------------
-        mov eax, [ebp - 8]    ; eax = Box*
-        ; ------------------------------ End Ambil offset variabel i ------------------------------
-
-
-        add dword [eax], edi    ; counter += step
-        jmp for_0_check
-        for_0_end:
-        pop edi    ; restore EDI
-        pop esi    ; restore ESI
-        ; ----- End Loop For 0 -----
-        ; free alamat heap variabel i
-        add esp, 4    ; bersihkan dari stack (scope.js)
 
     mov esp, ebp
     pop ebp
 
+exit_program:
     mov eax, 1
     xor ebx, ebx
     int 0x80
 
+; ------------------------------ Start Deklarasi fungsi checkAddr ------------------------------
+fun_checkAddr:
+    push ebp    ; buat stack frame baru
+    mov ebp, esp
+    call arena_mark    ; Ambil posisi arena saat ini ke eax
+    push eax           ; Simpan mark ke stack di [ebp - 4]
+
+
+    ; ------------------------------ Start View (Address Of) ------------------------------
+    ; ------------------------------ Start Ambil offset variabel x ------------------------------
+    mov eax, [ebp - 4]    ; eax = Box*
+    ; ------------------------------ End Ambil offset variabel x ------------------------------
+
+
+    push eax    ; Simpan alamat target yang mau di-view
+    ; Alokasikan 8 byte untuk Box baru hasil view
+    push 8    ; ------------------------------ alokasi untuk 1 element ------------------------------
+    call arena_alloc
+    add esp, 4
+    pop ebx     ; EBX = Alamat asli yang di-view
+    mov [eax], ebx ; Simpan alamat ke dalam value Box hasil
+    mov dword [eax + 4], 4 ; Set tipe Box hasil menjadi INT
+    ; ------------------------------ End View ------------------------------
+
+
+    ; ------------------------------ Start Print ------------------------------
+    push dword [eax + 4]    ; push tipe data 
+    cmp dword [eax + 4], 3  ; Cek apakah tipe datanya = 3 (Array)?
+    je .is_array_print_76094          ; Jika Ya, lompat ke penanganan Array
+
+
+    push dword [eax]        ; push nilai primitif (literal)
+    jmp .do_print_76094         ; lewati blok array, langsung print
+
+
+    .is_array_print_76094:
+    push eax                ; push POINTER referensi (literal)
+
+
+    .do_print_76094:
+    call print_generic    ; panggil fungsi untuk menampilkan nilai
+    add esp, 8    ; pop argument dari stack
+    call newline    ; untuk memanggil enter
+    ; ------------------------------ End Print ------------------------------
+
+
+
+
+fun_checkAddr_exit:
+    push eax           ; amankan return value fungsi (di eax)
+    mov eax, [ebp - 4] ; ambil kembali arena mark khusus fungsi ini
+    call arena_rewind  ; bersihkan memori arena fungsi ini
+    pop eax            ; kembalikan return value fungsi
+    ; free alamat heap variabel value
+
+
+
+
+    mov esp, ebp    ; bersihkan stack frame saat fungsi selesai
+    pop ebp
+    ret
+    ; ------------------------------ End Deklarasi fungsi checkAddr ------------------------------

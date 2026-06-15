@@ -3,7 +3,7 @@ function handleVarDecl(self, stmt){
 
     let isArrayVar = false;
 
-    if (stmt.initializer.type === 'ArrayLiteral') {
+    if (stmt.initializer.type === 'ArrayLiteral' || stmt.initializer.type === 'ArrayAlloc') {
         // Kasus A: Deklarasi langsung (var x = [1, 2];)
         isArrayVar = true;
     }
@@ -51,7 +51,8 @@ function handleVarDecl(self, stmt){
         offset: self.currentOffset,
         storage: 'stack',
         kind: 'box',
-        isArray: isArrayVar
+        isArray: isArrayVar,
+        isConst: stmt.kind === 'val'
     }, stmt);
 }
 

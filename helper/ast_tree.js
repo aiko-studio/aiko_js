@@ -7,8 +7,9 @@ class ProgramStmt {
 
 // variabel
 class VarDeclStmt {
-    constructor(name, initializer, lineStart, lineEnd){
+    constructor(kind, name, initializer, lineStart, lineEnd){
         this.type = 'VarDecl';
+        this.kind = kind;
         this.name = name;
         this.initializer = initializer;
         this.lineStart = lineStart;
@@ -223,6 +224,44 @@ class ContinueStmt {
     }
 }
 
+class ArrayAllocStmt {
+    constructor(size, lineStart, lineEnd) {
+        this.type = 'ArrayAlloc';
+        this.size = size; 
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+    }
+}
+
+class PushStmt {
+    constructor(arrayRef, value, lineStart, lineEnd) {
+        this.type = 'Push';
+        this.arrayRef = arrayRef;
+        this.value = value;      
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+    }
+}
+
+class PopStmt {
+    constructor(arrayRef, lineStart, lineEnd) {
+        this.type = 'Pop';
+        this.arrayRef = arrayRef;
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+    }
+}
+
+class ViewStmt {
+    constructor(argument, lineStart, lineEnd) {
+        this.type = 'View';
+        this.argument = argument; // Ini adalah IdentifierStmt dari variabel 'x'
+        this.lineStart = lineStart;
+        this.lineEnd = lineEnd;
+    }
+}
+
+
 module.exports = {
     ProgramStmt,
     VarDeclStmt,
@@ -245,5 +284,9 @@ module.exports = {
     UseStmt,
     LenStmt,
     BreakStmt,
-    ContinueStmt
+    ContinueStmt,
+    ArrayAllocStmt,
+    PushStmt,
+    PopStmt,
+    ViewStmt
 };

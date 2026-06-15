@@ -8,6 +8,8 @@ function handleLen(self, expr) {
         self.reportError(`Undefined variable '${expression.name}'`, expr);
         return;
     }
+    // console.log({meta});
+    
     if (meta.isArray !== true && meta.isArray !== 'dynamic') {
         self.reportError(`Type Error: Fungsi len() hanya bisa digunakan untuk tipe data Array. Variabel '${expression.name}' bukan array.`, expr);
         return;

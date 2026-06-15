@@ -16,7 +16,7 @@ module.exports = {
 
 		// 1. Susun Header
     	const headerParts = [
-    	  	`%include "${path.join(__dirname, '..', '..', '/stdlib/stdio.asm')}"`,
+    	  	`%include "${path.join(__dirname, '..', '..', '/runtime/runtime.inc')}"`,
     	  	'section .data',
     	  	...this.dataSection, 
     	  	'', // spacer
@@ -53,6 +53,7 @@ module.exports = {
     	  	'    mov esp, ebp',
     	  	'    pop ebp',
     	  	'',
+			'exit_program:',
     	  	'    mov eax, 1',
     	  	'    xor ebx, ebx',
     	  	'    int 0x80',

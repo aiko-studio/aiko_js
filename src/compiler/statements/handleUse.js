@@ -14,7 +14,7 @@ function handleUse(self, stmt) {
 
     if (!fs.existsSync(fullPath)) {
         // Jika tidak ada di lokal, cari di folder stdlib Aiko
-        const stdlibPath = path.join(__dirname, '..', '..', '..', 'stdlib'); // Sesuaikan relasi foldernya
+        const stdlibPath = path.join(__dirname, '..', '..', '..'); // Sesuaikan relasi foldernya
         fullPath = path.join(stdlibPath, modulePath + '.ak');
     }
 

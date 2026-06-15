@@ -9,8 +9,11 @@ function generateArrayLiteral(self, expr){
         const value = expr.elements[i - 1].value; // index skrg - 1
         // console.log(i);
         
-        
-        if(typeof(value) === 'number'){
+        if(value === null){
+            self.emit(`mov dword [eax${index}], 0`);
+            self.emit(`mov dword [eax${typePos}], 9    ; masukkan tipe data dari value, yaitu mu/null sebagai 9`);
+        }
+        else if(typeof(value) === 'number'){
             self.emit(`mov dword [eax${index}], ${value}`);
             self.emit(`mov dword [eax${typePos}], 0    ; masukkan tipe data dari value, yaitu angka sebagai 0`);
             // self.blank(2);

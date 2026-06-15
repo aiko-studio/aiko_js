@@ -11,6 +11,9 @@ const path = require('path');
 
 const inputFile = process.argv[2];
 
+const outputIdx = process.argv.indexOf('-o');
+const outputFile = outputIdx !== -1 ? process.argv[outputIdx + 1] : null;
+
 if (!inputFile) {
     console.error("Usage: node test_compiler.js <source_file>.ak");
     process.exit(1);
@@ -18,7 +21,8 @@ if (!inputFile) {
 
 try {
     // Baca file
-    const code = fs.readFileSync(path.join(__dirname, `../${inputFile}`), 'utf8');
+    const absoluteInputPath = path.resolve(inputFile);
+    const code = fs.readFileSync(absoluteInputPath, 'utf8');
     const reporter = new ErrorReporter(code);
 
     // Lexing
@@ -41,17 +45,16 @@ try {
     }
 
     // Tulis output
-    fs.writeFileSync(path.join(__dirname, `../out/main.asm`), asm);
+    const targetAsmPath = outputFile ? path.resolve(outputFile) : path.join(__dirname, `../out/main.asm`);
+    fs.writeFileSync(targetAsmPath, asm);
 
     const debugData = {
         sourceMap: map,
         headerOffset: offset
     };
     
-    fs.writeFileSync(
-        path.join(__dirname, `../out/main.debug.json`), 
-        JSON.stringify(debugData, null, 2) // null, 2 agar json rapi terbaca
-    );
+    const targetDebugPath = targetAsmPath.replace(/\.asm$/, '.debug.json');
+    fs.writeFileSync(targetDebugPath, JSON.stringify(debugData, null, 2));
 
     // console.log("Compilation successful!");
     // console.log("- Assembly: out/main.asm");

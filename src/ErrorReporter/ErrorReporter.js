@@ -27,7 +27,7 @@ class ErrorReporter {
             
             if (this.sourceCode) {
                 const lines = this.sourceCode.split('\n');
-                console.error(`   |> ${lines[err.line - 1]}`);
+                if(err.line - 1) console.error(`   |> ${lines[err.line - 1]}`); 
             }
             console.error("");
         });

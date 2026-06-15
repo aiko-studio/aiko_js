@@ -22,7 +22,7 @@ function handleFunCall(self, stmt){
             // Ubah instruksi Call di Assembly
             // Contoh: prefix 'math' -> realModule 'std_math' -> 'aiko_std_math_min'
             finalAsmName = `${realModule}_${funcName}`;
-            console.log({finalAsmName});
+            // console.log({finalAsmName});
             
             // Nama di registry juga kemungkinan besar sudah di-mangling saat FunctionDecl
             registryName = finalAsmName; 
@@ -50,10 +50,11 @@ function handleFunCall(self, stmt){
         const { box } = self.generateExpression(argExpr);
 
         let isArrayArgument = false;
+        let varMeta = null;
 
         // CEK MELALUI SYMBOL TABLE
         if (argExpr.type === 'Identifier') {
-            const varMeta = self.resolveVar(argExpr.name); 
+            varMeta = self.resolveVar(argExpr.name); 
             
             // Kalau variabelnya ketemu dan properti isArray-nya ada (true/'dynamic'/dll)
             if (varMeta && varMeta.isArray) {
@@ -62,9 +63,13 @@ function handleFunCall(self, stmt){
         }
 
         if(isArrayArgument){
+            // console.log({pointer: argExpr.name});
+            
             self.emit(`push eax    ; push pointer arg ${i}`);
         }
         else {
+            // console.log({value: argExpr.name});
+            
             self.emit(`; --- Pass-by-Value: Copying argument ${i} ---`);
             self.emit(`push eax            ; Simpan alamat Box asli sementara`);
     

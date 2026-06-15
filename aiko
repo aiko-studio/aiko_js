@@ -1,0 +1,105 @@
+#!/bin/bash
+
+ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
+OUTPUT_DIR="$ROOT_DIR/out"
+
+# Fungsi untuk menampilkan bantuan
+show_help() {
+    echo "Aiko Compiler"
+    echo ""
+    echo "Options:"
+    echo "  -v, --version    Show version information"
+    echo "  -h, --help       Show this help message"
+}
+
+# Fungsi untuk menampilkan versi
+AIKO_VERSION="2.2.0"
+BUILD_DATE="2026-06-14"
+TARGET_ARCH="x86_64-linux"
+COMPILER_PATH=$(readlink -f "$0") # Mengambil path absolut biner ini
+OS_INFO=$(uname -a)
+
+show_verbose_version() {
+    echo "Aiko Compiler v$AIKO_VERSION"
+    echo "Built on: $BUILD_DATE"
+    echo "Target: $TARGET_ARCH"
+    echo "Compiler Path: $COMPILER_PATH"
+    echo "System: $OS_INFO"
+    echo "Features: arena-alloc, nasm-backend, custom-lexer"
+    echo "Configured with: --enable-asm --with-runtime=stdlib"
+}
+
+# Cek apakah ada argumen
+if [ $# -eq 0 ]; then
+    echo "Error: No input file."
+    echo "Usage: aiko <source_file>.ak"
+    exit 1
+fi
+
+# Parsing argumen
+case "$1" in
+    -v|--version)
+        show_verbose_version
+        exit 0
+        ;;
+    -h|--help)
+        show_help
+        exit 0
+        ;;
+    *)
+        # Cek apakah file ada
+        if [ ! -f "$1" ]; then
+            echo "Error: File '$1' not found."
+            exit 1
+        fi
+        
+        # Jalankan proses kompilasi
+        # Contoh: node /path/to/compiler.js "$1"
+        echo "Compiling $1..."
+        # Panggil logika kompilasi kamu di sini
+        ;;
+esac
+
+INPUT_FILE="$(readlink -f "$1")"
+
+# Extract filename (tanpa ekstensi)
+FILENAME="$(basename -- "$INPUT_FILE")"
+BASENAME="${FILENAME%.*}"
+
+rm -rf "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
+
+OUTPUT_BIN="$OUTPUT_DIR/$BASENAME"
+ASM_FILE="$OUTPUT_DIR/$BASENAME.asm"
+OBJ_FILE="$OUTPUT_DIR/$BASENAME.o"
+
+# Compile pakai transpiler JS (harus output ke $ASM_FILE)
+echo "[1/4] Transpiling $INPUT_FILE to Assembly..."
+node "$ROOT_DIR/test/test_compiler.js" "$INPUT_FILE" -o "$ASM_FILE"
+
+if [ -f "$ASM_FILE" ]; then
+    echo "[2/4] Compiling standard library modules..."
+    # Kompilasi otomatis semua file di folder runtime
+    RUNTIME_OBJS=()
+    for asm_file in "$ROOT_DIR"/runtime/*.asm; do
+        obj_name="$(basename "${asm_file%.*}").o"
+        nasm -f elf32 "$asm_file" -o "$OUTPUT_DIR/$obj_name"
+        RUNTIME_OBJS+=("$OUTPUT_DIR/$obj_name")
+    done
+
+    echo "[3/4] Compiling main program..."
+    nasm -f elf32 "$ASM_FILE" -I "$OUTPUT_DIR" -o "$OBJ_FILE"
+    
+    echo "[4/4] Linking all modules into executable..."
+    ld -m elf_i386 "$OBJ_FILE" "${RUNTIME_OBJS[@]}" -o "$OUTPUT_BIN"
+
+    # Run if build succeeded
+    if [ -f "$OUTPUT_BIN" ]; then
+        echo "Running: $OUTPUT_BIN"
+        "$OUTPUT_BIN"
+    else
+        echo "Linking failed!"
+    fi
+else
+    echo "Compilation failed! $ASM_FILE not generated."
+fi

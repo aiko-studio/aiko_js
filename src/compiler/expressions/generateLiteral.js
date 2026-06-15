@@ -3,7 +3,7 @@ function generateLiteral(self, expr, mode){
   	const { value } = expr;
   	// console.log({mode});
   	if(mode === 'condition'){
-		self.emit(`mov ecx, ${value}    ; ecx = ${value}`);
+		self.emit(`mov ecx, ${value !== null ? value : '0'}    ; ecx = ${value}`);
 		self.emit(`; ------------------------------ End Literal ------------------------------`);
 		self.blank(1);
 		return { box: false, val: value };
@@ -13,7 +13,12 @@ function generateLiteral(self, expr, mode){
   	self.allocBox();
   	// disini sekarang eax = Box* (alamat Box)
 
-  	if(typeof value === 'number'){
+	
+	if(value === null){
+		self.emit(`mov dword [eax], 0        ; value untuk null = 0`);
+        self.emit(`mov dword [eax + 4], 9    ; tipe data = null sebagai 9`);
+	}
+  	else if(typeof value === 'number'){
   		self.emit(`mov dword [eax], ${value}    ; alamat dalam register eax = ${value}`);
   		self.emit(`mov dword [eax + 4], 0    ; tipe data = angka sebagai 0`);
   		// self.blank(2);

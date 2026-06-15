@@ -1,7 +1,8 @@
 const {
     BinaryOpStmt, LiteralStmt, IdentifierStmt, 
     ArrayAccessStmt, ArrayLiteralStmt, FunctionCallStmt,
-    InputStmt, LenStmt, TypeofStmt, UnaryOpStmt, PrintStmt
+    InputStmt, LenStmt, TypeofStmt, UnaryOpStmt, PrintStmt,
+    ArrayAllocStmt, ViewStmt
 } = require('../../helper/ast_tree');
 
 module.exports = {
@@ -53,6 +54,16 @@ module.exports = {
 
     // untuk -, !
     parseUnary(){
+        if (this.current.type === 'VIEW') {
+            const viewToken = this.expect('VIEW'); // Konsumsi token 'view'
+            const lineStart = viewToken.line;
+            
+            // Ambil identifier setelah kata 'view' (misal: x)
+            const argument = this.parsePrimary(); 
+            const lineEnd = argument.lineEnd || argument.lineStart;
+            
+            return new ViewStmt(argument, lineStart, lineEnd);
+        }
         while(this.match('OPERATOR', '-') || this.match('OPERATOR', '!')){
             const opToken = this.tokens[this.position - 1];
             const operand = this.parseUnary();
@@ -66,6 +77,29 @@ module.exports = {
             const value = this.current.value;
             this.next_token();
             return new LiteralStmt(value, this.getLine(), this.getLine());
+        }
+
+        // cek null
+        if(this.current.type === 'NULL') { 
+            const line = this.getLine();
+            this.next_token();
+
+            return new LiteralStmt(null, line, line);
+        }
+
+        // cek alokasi
+        if(this.current.type === 'ARRAY') { 
+            const allocToken = this.expect('ARRAY'); 
+            const lineStart = allocToken.line;
+
+            this.expect('LPAREN'); // Pastikan '('
+            const sizeArgument = this.parseExpression(); // Ambil angka/variabel ukuran array
+            this.expect('RPAREN'); // Pastikan ')'
+
+            const lineEnd = this.tokens[this.position - 1].line;
+
+            // Mengembalikan AST Node baru khusus untuk Alokasi Array
+            return new ArrayAllocStmt(sizeArgument, lineStart, lineEnd);
         }
 
         // cek len

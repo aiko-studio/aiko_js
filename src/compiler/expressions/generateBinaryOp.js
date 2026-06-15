@@ -3,11 +3,22 @@ function generateBinaryOp(self, expr, mode) {
 
     self.emit(`; ------------------------------ Start Binary Op (${op}) ------------------------------`);
 
+    const isArithmeticOrRelational = ['+', '-', '*', '/', '%', '<', '>', '<=', '>='].includes(op);
+
     // left operand, diawal semua dicoba ke condition dlu agar dapat value, tapi kalau masih dapat box lanjut ke if
     const resLeft = self.generateExpression(left, 'condition'); 
     
     // Logic: hasil Left ada di EDX
-    if (resLeft.box) {
+    if (left.type === 'Literal' && left.value === null) {
+        if(isArithmeticOrRelational){ // untuk operasi null
+            self.emit(`xor eax, eax             ; Set EAX = 0 untuk memicu panic`);
+            self.emit(`call check_null_pointer    ; cek apakah operand kiri null`);
+        }
+        else { // untuk perbandingan null dengan literal langsung
+            self.emit(`mov edx, 0               ; Left operand (null) = 0`);
+        }
+    }
+    else if (resLeft.box) {
         self.emit(`mov eax, ${resLeft.reg || 'eax'}`);
         self.emit(`mov edx, [eax]    ; Unbox left ke EDX`);
     }
@@ -25,7 +36,16 @@ function generateBinaryOp(self, expr, mode) {
     const resRight = self.generateExpression(right, 'condition'); // Minta 'condition' juga
 
     // Logic: hasil Right ada di EBX
-    if (resRight.box) {
+    if (right.type === 'Literal' && right.value === null) {
+        if(isArithmeticOrRelational){
+            self.emit(`xor eax, eax             ; Set EAX = 0 untuk memicu panic`);
+            self.emit(`call check_null_pointer    ; cek apakah operand kiri null`);
+        }
+        else {
+            self.emit(`mov ebx, 0               ; Right operand (null) = 0`);
+        }
+    }
+    else if (resRight.box) {
         self.emit(`mov eax, ${resRight.reg || 'eax'}`);
         self.emit(`mov ebx, [eax]    ; Unbox right ke EBX`);
     }
@@ -41,61 +61,24 @@ function generateBinaryOp(self, expr, mode) {
     self.emit(`pop edx    ; restore left value ke edx`);
 
     // =========================================================
-    // 3. EKSEKUSI OPERASI (EDX op EBX)
+    // EKSEKUSI OPERASI (EDX op EBX)
     // =========================================================
     
     switch(op){
         // Aritmatika
-        case '+': self.emit(`add edx, ebx`); break;
-        case '-': self.emit(`sub edx, ebx`); break;
-        case '*': self.emit(`imul edx, ebx`); break;
-        case '/': 
-            self.emit(`mov eax, edx`);
-            self.emit(`cdq`);
-            self.emit(`idiv ebx`);
-            self.emit(`mov edx, eax`);
-            break;
-        case '%':
-            self.emit(`mov eax, edx`);
-            self.emit(`cdq`);
-            self.emit(`idiv ebx`);
-            // Sisa bagi sudah di EDX
-            break;
-
-        // Komparasi (Hasil boolean 0/1 ditaruh di EDX agar seragam)
-        case '<':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`setl bl`);
-            self.emit(`movzx edx, bl`);
-            break;
-        case '>':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`setg bl`);
-            self.emit(`movzx edx, bl`);
-            break;
-        case '==':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`sete bl`);
-            self.emit(`movzx edx, bl`);
-            break;
-        case '!=':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`setne bl`);
-            self.emit(`movzx edx, bl`);
-            break;
-        case '<=':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`setle bl`);
-            self.emit(`movzx edx, bl`);
-            break;
-        case '>=':
-            self.emit(`cmp edx, ebx`);
-            self.emit(`setge bl`);
-            self.emit(`movzx edx, bl`);
-            break;
+        case '+': self.emit(`call runtime_add`); break;
+        case '-': self.emit(`call runtime_sub`); break;
+        case '*': self.emit(`call runtime_mul`); break;
+        case '/': self.emit(`call runtime_div`); break;
+        case '%': self.emit(`call runtime_mod`); break;
+        case '<': self.emit(`call runtime_eq`); break;
+        case '>': self.emit(`call runtime_ne`); break;
+        case '==': self.emit(`call runtime_lt`); break;
+        case '!=': self.emit(`call runtime_gt`); break;
+        case '<=': self.emit(`call runtime_le`); break;
+        case '>=': self.emit(`call runtime_ge`); break;
     }
 
-    self.emit(`; ------------------------------ End Binary Op ${op} ------------------------------`);
 
     // return handling
     // KASUS A: Dipanggil oleh IF / WHILE / ELIF
@@ -121,9 +104,8 @@ function generateBinaryOp(self, expr, mode) {
     self.emit(`mov [eax], edx`); // Masukkan ke box
     self.emit(`mov dword [eax + 4], 0`); // Masukkan tipe ke box
 
-    // Opsional: Jika bahasa Anda butuh tipe data runtime (misal 1=INT, 2=BOOL)
-    // Anda bisa tambahkan logic di sini untuk set tipe berdasarkan operator.
-    // Contoh: if(['==','!=','<','>'].includes(op)) mov [eax+4], TYPE_BOOL
+    self.emit(`; ------------------------------ End Binary Op ${op} ------------------------------`);
+
 
     return { box: true, val: left.val }; 
 }

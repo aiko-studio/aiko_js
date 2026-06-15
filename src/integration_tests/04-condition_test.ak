@@ -36,6 +36,11 @@ if(10 < first){
 
 
 
+
+
+
+
+
 var nilai = 100;                # else 99
 
 if nilai == 10 {
@@ -54,5 +59,37 @@ else {
     print("else");
     var m = 99;
     print(m);
+}
+
+
+
+
+
+
+
+
+
+
+
+var entah = false;
+if(10 > 11){
+    print("woi");
+}
+elif(entah){
+    print("nah");
+}
+else {
+    print("nanana");
+}
+
+entah = true;
+if(10 > 11){
+    print("woi");
+}
+elif(entah){
+    print("nah");
+}
+else {
+    print("nanana");
 }
 print("===== END IF =====");

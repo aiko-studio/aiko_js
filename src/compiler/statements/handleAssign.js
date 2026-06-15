@@ -12,7 +12,7 @@ function handleAssign(self, stmt){
         }
 
         // CEK APAKAH VARIABEL TERSEBUT ADALAH ARRAY
-        console.log({meta});
+        // console.log({meta});
         
         if (meta.isArray !== true && meta.isArray !== 'dynamic') { 
             self.reportError(`Variabel '${array_name.name}' bukan sebuah array.`, stmt);
@@ -30,6 +30,12 @@ function handleAssign(self, stmt){
             self.emit(`mov ecx, [eax]    ; pindahkan nilai ke ecx`); // Sekarang ECX berisi value indeks (misal: 2)
         }
         self.generateExpression(array_name); // EAX = Base Address Array
+
+        // if (meta.isArray === 'dynamic') {
+        //     self.emit(`cmp dword [eax + 4], 3      ; Cek type tag di offset 4`);
+        //     self.emit(`jne exit_program ; Lompat ke error jika bukan array`);
+        // }
+
         self.emit(`call check_bound`);
         self.emit(`imul ecx, 8`);            // ECX = Offset data
         
@@ -67,6 +73,12 @@ function handleAssign(self, stmt){
             return;
         }
 
+        if (meta.isConst) {
+            self.reportError(`Compile Error: Tidak dapat mengubah nilai konstanta '${variable.name}'.`, stmt);
+            return;
+        }
+
+        self.emit(`; ------------------------------ Start Assign Variable ------------------------------`);
         const pointerOp = meta.kind === 'param' ? '+' : '-';
 
         // In-place hanya untuk number, bool, dan BinaryOp (bukan string)
@@ -89,6 +101,11 @@ function handleAssign(self, stmt){
             // 1. Generate nilai mentah ke Ecx
             self.generateExpression(patchedInitializer, 'condition');
             
+            // agar logika penyimpanan di bawahnya tetap seragam dan EAX aman dipakai untuk alamat.
+            if (patchedInitializer.type === 'BinaryOp') {
+                self.emit(`mov ecx, eax    ; pindahkan hasil BinaryOp dari EAX ke ECX`);
+            }
+
             // 2. Load alamat box lama
             self.emit(`mov eax, [ebp ${pointerOp} ${meta.offset}]  ; load alamat box lama`);
             

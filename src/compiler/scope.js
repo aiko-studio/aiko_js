@@ -25,7 +25,7 @@ module.exports = {
 			this.emit(`; free alamat heap variabel ${name}`);
 			// this.emit(`mov eax, [ebp ${pointerOp} ${offset}]`);
   	  	  	// this.deallocBox();
-  	  	  	console.log(`Free scope at level ${this.variables.length + 1} on size ${localStackSize}`);
+  	  	  	// console.log(`Free scope at level ${this.variables.length + 1} on size ${localStackSize}`);
 
   	  	  	if(v.kind !== 'param'){
 				localStackSize += 4;
@@ -37,7 +37,7 @@ module.exports = {
 	
 		// free stack
   	  	if (localStackSize > 0) {
-			console.log({localStackSize});
+			// console.log({localStackSize});
 				
   	  		this.emit(`add esp, ${localStackSize}    ; bersihkan dari stack (scope.js)`);
   	  		this.currentOffset -= localStackSize;

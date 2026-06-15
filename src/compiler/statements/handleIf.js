@@ -13,8 +13,26 @@ function handleIf(self, stmt) {
     );
 
     self.emit(`; ------------------------------ Start Kondisi if ${ifId} ------------------------------`);
-    // IF condition
-    self.generateExpression(stmt.condition, 'condition');
+    const resIfCond = self.generateExpression(stmt.condition, 'condition');
+    if (resIfCond && resIfCond.box) {
+        // Jika compiler mengembalikan info offset stack (seperti val: 4 atau nama register)
+        if (typeof resIfCond.val === 'number') {
+            // Paksa ambil alamat Box dari stack [ebp - val] masuk ke EAX
+            self.emit(`mov eax, [ebp - ${resIfCond.val}]    ; Ambil Box* dari stack frame`);
+        }
+        else {
+            self.emit(`mov eax, ${resIfCond.reg || 'eax'}`);
+        }
+        
+        // Ambil nilai primitif boolean dari dalam Box Heap
+        self.emit(`mov eax, [eax]                         ; Unbox nilai asli (0/1) dari Heap`);
+    } else {
+        // Jika berupa nilai mentah hasil komparasi biner (box: false)
+        if(resIfCond && resIfCond.reg && resIfCond.reg !== 'eax') {
+            self.emit(`mov eax, ${resIfCond.reg}`);
+        }
+    }
+    
     self.emit(`; jika false maka lanjut kondisi selanjutnya`);
     self.emit(`cmp eax, 0`);
     self.emit(`je ${stmt.elifs.length > 0 ? elifCondLabels[0] : elseLabel}`);
@@ -44,7 +62,20 @@ function handleIf(self, stmt) {
                 : elseLabel;
 
         self.emit(`${elifCondLabels[i]}:`);
-        self.generateExpression(stmt.elifs[i].condition, 'condition');
+        const resElifCond = self.generateExpression(stmt.elifs[i].condition, 'condition');
+
+        if(resElifCond && resElifCond.box) {
+            if(typeof resElifCond.val === 'number') {
+                self.emit(`mov eax, [ebp - ${resElifCond.val}]`);
+            }
+            else {
+                self.emit(`mov eax, ${resElifCond.reg || 'eax'}`);
+            }
+            self.emit(`mov eax, [eax]    ; Unbox nilai asli boolean dari Box Elif`);
+        } else if (resElifCond && resElifCond.reg && resElifCond.reg !== 'eax') {
+            self.emit(`mov eax, ${resElifCond.reg}`);
+        }
+
         self.emit(`cmp dword eax, 0`,);
         self.emit(`je ${nextFalse}`,);
         self.emit(`jmp ${elifThenLabels[i]}`);

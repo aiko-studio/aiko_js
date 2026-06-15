@@ -106,7 +106,7 @@ function handleFunDecl(self, stmt){
     // agar bisa mendeteksi return diluar fungsi dengan cara membuat current func na null
     self.currentFunction = null;
 
-    console.log(self.functionNames);
+    // console.log(self.functionNames);
     
 }
 

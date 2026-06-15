@@ -7,8 +7,9 @@
 
 # # TES
 # print("===== START TES PERFORMA =====");
-# # var limit = 1000000; # 1jt
+# var limit = 1000000; # 1jt
 # var limit = 1000000000; # 1miliar
+# var limit = 10;
 # var count = 0;
 
 # for i = 0 .. limit {
@@ -21,58 +22,36 @@
 
 
 
-# # 313 muncul
-# fun change(x){
-#     print(x);
-#     x = 1;
-#     print(x);
+
+
+
+# var test_arr_change = [99, 30, 88];
+# fun change_test(arr){
+#     test_arr_change[0] = 10000;
 # }
 
-# var num = 3;
-# change(num);
-# print(num);
-
-
-# belummmmmmmmm
-var kata = "tes12";
-for i = 0 .. 5 {
-    print(kata[i]);
-}
-
-
-
-
-# var f = 5;
-# var x = [15, 11, f, 7, 2];
-# print(x[2]);
-# var y = 9;
-
-
-# fun twoSum(arr, target){
-#     print(arr);
-#     for i = 0 .. len(arr) {
-#         for j = i + 1 .. len(arr) {
-#             if(arr[i] + arr[j] == target){
-#                 return [i, j];
-#             }
-#         }
-#     }
-#     return [];
-# }
-
-# var res = twoSum(x, y);
-# print(res[0]);
-# print(res[1]);
-
-
-# use std.string
-
-# fun may(){print("wowowoo");}
-
-# string.may();
+# print(test_arr_change);
 
 
 
 
 
+# print(2147483647);
+# print(-10);
 
+# use std.math as m
+
+# print(m.MAX_INT);
+# print(m.power(2, 5));
+
+
+
+
+# var arr = array(5);
+# push(arr, 10);
+# push(arr, 20);
+# push(arr, 30);
+# print(arr);
+
+
+# print(null == false);

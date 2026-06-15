@@ -5,7 +5,7 @@ var length = len(arr);
 
 print(length);                      # 11
 print(len(arr));                    # 11
-print(arr);                       # 9
+print(arr);                       # [9, 10, 11, 12, 13, 14, 97, 43, 35, 42, 75]
 print(arr[0]);                    # 9
 print(arr[5]);                    # 14
 

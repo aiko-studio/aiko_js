@@ -2,6 +2,8 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
+const AIKO_COMPILER_PATH = path.resolve(__dirname, 'aiko');
+
 // Folder sumber testing
 const TEST_FOLDER_NAME = path.join('src', 'integration_tests');
 const TEST_DIR = path.join(__dirname, TEST_FOLDER_NAME); 
@@ -59,7 +61,7 @@ function runTests() {
             fs.copyFileSync(akFilePath, TEMP_MAIN_AK);
 
             // 2. Compile (Abaikan stdout/log dari bash script agar tidak mengotori pencocokan)
-            execSync(`./run_fs.sh ./main.ak`, { stdio: ['ignore', 'ignore', 'inherit'] });
+            execSync(`${AIKO_COMPILER_PATH} ./main.ak`, { stdio: ['ignore', 'ignore', 'inherit'] });
 
             // 3. JALANKAN BINER + SUNTIKKAN & ECHO INPUT OTOMATIS
             let actualOutput;
@@ -114,17 +116,31 @@ function runTests() {
                 actualOutput = execSync(`./out/main`, { encoding: 'utf-8' }).trim();
             }
 
-            // 4. ASSERTION & DETAILED LINE-BY-LINE DIFF
-            if (actualOutput === expectedOutput) {
+            // --- REGEX UNTUK DETEKSI ALAMAT HEXADECIMAL 32-BIT (0x + 8 karakter hex) ---
+            // Pola ini akan menangkap bentuk seperti 0x0032BDE0 atau 0x1032BDE8
+            const hexRegex = /0x[0-9A-Fa-f]{8}/g;
+
+            // Fungsi pembantu untuk menormalisasi alamat hex dinamis menjadi teks statis
+            const normalizeOutput = (str) => {
+                return str.replace(hexRegex, '[HEX_ADDRESS]').trim();
+            };
+
+            // Normalisasi kedua output sebelum dibandingkan
+            const normalizedActual = normalizeOutput(actualOutput);
+            const normalizedExpected = normalizeOutput(expectedOutput);
+
+            // 4. ASSERTION MENGGUNAKAN HASIL NORMALISASI
+            if (normalizedActual === normalizedExpected) {
                 console.log(`✅ PASSED: ${file}`);
                 passed++;
             } else {
                 console.log(`❌ FAILED: ${file}`);
                 console.log(`-----------------------------------------------`);
-                console.log(`🔍 ANALISIS PERBEDAAN (LINE DIFF):`);
+                console.log(`🔍 ANALISIS PERBEDAAN (LINE DIFF WITH NORMALIZATION):`);
                 
-                const expectedLines = expectedOutput.split('\n');
-                const actualLines = actualOutput.split('\n');
+                // Pisahkan berdasarkan baris dari string yang SUDAH dinormalisasi
+                const expectedLines = normalizedExpected.split('\n');
+                const actualLines = normalizedActual.split('\n');
                 const maxLines = Math.max(expectedLines.length, actualLines.length);
 
                 for (let i = 0; i < maxLines; i++) {

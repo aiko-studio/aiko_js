@@ -2,8 +2,7 @@ const {
     ProgramStmt, VarDeclStmt, AssignmentStmt, PrintStmt,
     IfStmt, ElifStmt, ForStmt, FunctionDeclStmt, ReturnStmt,
     BreakStmt, ContinueStmt, UseStmt, IdentifierStmt, ArrayAccessStmt,
-    LiteralStmt,
-    FunctionCallStmt
+    LiteralStmt, FunctionCallStmt, PushStmt, PopStmt,
 } = require('../../helper/ast_tree.js');
 
 module.exports = {
@@ -22,6 +21,7 @@ module.exports = {
         
         // match sudah memanggil next token, jadi akan langsung ke identifier, atua apapun itu setelah keywords
         if(this.match('VAR')) return this.parseVarDeclStmt();
+        if(this.match('VAL')) return this.parseVarDeclStmt('val');
         if(this.match('PRINT')) return this.parsePrintStmt();
         if(this.match('IF')) return this.parseIfStmt();
         if(this.match('FOR')) return this.parseForStmt();
@@ -29,6 +29,8 @@ module.exports = {
         if(this.match('FUN')) return this.parseFunctionDeclStmt();
         if(this.match('BREAK')) return this.parseBreakStmt();
         if(this.match('CONTINUE')) return this.parseContinueStmt();
+        if(this.match('PUSH')) return this.parsePushStmt();
+        if(this.match('POP')) return this.parsePopStmt();
         if(this.current.type === 'IDENTIFIER'){
             const lineStart = this.current.line;
             let name = this.current.value;
@@ -92,7 +94,7 @@ module.exports = {
         return null;
     },
 
-    parseVarDeclStmt(){
+    parseVarDeclStmt(kind = 'var'){
         const lineStart = this.tokens[this.position - 1].line;
 
         const name = this.expect('IDENTIFIER').value; // mengambil nilai nama variabel dari token
@@ -112,7 +114,7 @@ module.exports = {
         */
         this.expect('SEMICOLON', ';');
         const lineEnd = this.tokens[this.position - 1].line;
-        return new VarDeclStmt(name, value, lineStart, lineEnd);
+        return new VarDeclStmt(kind, name, value, lineStart, lineEnd);
     },
 
 
@@ -188,7 +190,7 @@ module.exports = {
             const lineEnd = this.tokens[this.position - 1].line;            
             
             return new ForStmt(
-                new VarDeclStmt(name, startExpr, bodyLine),
+                new VarDeclStmt('var', name, startExpr, bodyLine),
                 endExpr,
                 step,
                 body,
@@ -218,7 +220,7 @@ module.exports = {
 
             // Return Node khusus Iterator
             return new ForStmt(
-                new VarDeclStmt(name, sourceArray, bodyLine),
+                new VarDeclStmt('var', name, sourceArray, bodyLine),
                 null,
                 whenCond,
                 body,
@@ -322,6 +324,32 @@ module.exports = {
         const lineEnd = this.tokens[this.position - 1].line;
 
         return new UseStmt(module, alias, lineStart, lineEnd);
+    },
+
+    parsePushStmt(){
+        const lineStart = this.tokens[this.position - 1].line; // baris token 'PUSH'
+        
+        this.expect('LPAREN');
+        const arrayRef = this.parseExpression(); // Target array (bisa identifier / array access)
+        this.expect('COMMA');
+        const valueExpr = this.parseExpression(); // Nilai yang ingin dimasukkan
+        this.expect('RPAREN');
+        this.expect('SEMICOLON');
+        
+        const lineEnd = this.tokens[this.position - 1].line;
+        return new PushStmt(arrayRef, valueExpr, lineStart, lineEnd);
+    },
+
+    parsePopStmt(){
+        const lineStart = this.tokens[this.position - 1].line; // baris token 'POP'
+        
+        this.expect('LPAREN');
+        const arrayRef = this.parseExpression(); // Target array yang mau di-pop
+        this.expect('RPAREN');
+        this.expect('SEMICOLON');
+        
+        const lineEnd = this.tokens[this.position - 1].line;
+        return new PopStmt(arrayRef, lineStart, lineEnd);
     },
 
     // untuk cek block {}

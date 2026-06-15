@@ -9,6 +9,8 @@ const handleUse = require('./handleUse');
 const handleReturn = require('./handleReturn');
 const handleContinue = require('./handleContinue');
 const handleBreak = require('./handleBreak');
+const handlePush = require('./handlePush');
+const handlePop = require('./handlePop');
 
 const statementHandlers = {
     'Print':        (self, stmt) => handlePrint(self, stmt),
@@ -22,6 +24,8 @@ const statementHandlers = {
   	'Return':       (self, stmt) => handleReturn(self, stmt),
   	'Break':        (self, stmt) => handleBreak(self, stmt),
   	'Continue':     (self, stmt) => handleContinue(self, stmt),
+  	'Push':    		(self, stmt) => handlePush(self, stmt),
+  	'Pop':     		(self, stmt) => handlePop(self, stmt),
 };
 
 module.exports = statementHandlers;
